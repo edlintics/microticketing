@@ -1,7 +1,7 @@
 import mongoose from "mongoose";
 import { Password } from "../services/password";
 
-// An interface that describe the propoerties of a new user
+// An interface that describe the properties of a new user
 interface UserAttrs {
   email: string;
   password: string;
@@ -26,7 +26,7 @@ const userSchema = new mongoose.Schema(
     },
     password: {
       type: String,
-      requrie: true,
+      required: true,
     },
   },
   {

@@ -16,6 +16,14 @@ spec:
         - name: tickets
           image: edlintics/tickets
           env: # reference to the environment variables that can be created in other pods
+            - name: NATS_CLIENT_ID #The clientID will be refered to the pod name
+              valueFrom:
+                fieldRef:
+                  fieldPath: metadata.name
+            - name: NATS_URL
+              value: https://nats-srv:4222
+            - name: NATS_CLUSTER_ID
+              value: ticketing
             - name: MONGO_URI
               value: "mongodb://tickets-mongo-srv:27017/tickets" # if there is username and password contain, deploy it like the JWT_KEY by adding environment variable
             - name: JWT_KEY #name of the key
