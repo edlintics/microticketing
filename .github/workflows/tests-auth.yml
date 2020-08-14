@@ -2,9 +2,9 @@ name: tests-auth
 
 on:
   pull_request:
-    paths:
+    paths: #only run the test on auth when push request related to auth directory
       - "auth/**"
-  
+
 jobs:
   build:
     runs-on: ubuntu-latest

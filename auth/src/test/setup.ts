@@ -17,6 +17,7 @@ let mongo: any;
 beforeAll(async () => {
   //Set the enviroment variables
   process.env.JWT_KEY = "sdsadasd";
+  process.env.NODE_TLS_REJECT_UNAUTHORIZED = "0";
 
   // hook function, run before everything is setter
   mongo = new MongoMemoryServer();

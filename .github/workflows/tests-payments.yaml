@@ -2,7 +2,8 @@ name: tests-payments
 
 on:
   pull_request:
-  
+    paths: #only run the test on payments when push request related to payments directory
+      - "payments/**"
 jobs:
   build:
     runs-on: ubuntu-latest

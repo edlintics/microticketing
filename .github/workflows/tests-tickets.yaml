@@ -1,8 +1,9 @@
 name: tests-tickets
 
 on:
-  pull_request
-  
+  pull_request:
+    paths: #only run the test on tickets when push request related to tickets directory
+      - "tickets/**"
 jobs:
   build:
     runs-on: ubuntu-latest
