@@ -18,7 +18,8 @@ app.use(json());
 app.use(
   cookieSession({
     signed: false, // no encryption
-    secure: process.env.NODE_ENV !== "test", // set this to to true in normal https reuest, in test environment, change to false
+    // secure: process.env.NODE_ENV !== "test", // set this to to true in normal https reuest, in test environment, change to false
+    secure: false, // in deployment mode
   })
 );
 
