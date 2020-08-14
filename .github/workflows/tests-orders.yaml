@@ -1,8 +1,8 @@
 name: tests-orders
 
 on:
-  pull_request
-    paths: #only run the test on auth when push request related to auth directory
+  pull_request:
+    paths: #only run the test on orders when push request related to order directory
       - "orders/**"
 jobs:
   build:
