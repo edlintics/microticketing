@@ -4,11 +4,12 @@ import { useState } from "react";
 function useRequest({ url, method, body, onSuccess }) {
   const [errors, setErrors] = useState(null);
 
-  const doRequest = async () => {
+  const doRequest = async (props = {}) => {
+    // in the parameter introduce props so we can optionally add in more information to send to the api
     try {
       setErrors(null); // make the errors disappear
       // exuture if it is successul, status 200
-      const response = await axios[method](url, body);
+      const response = await axios[method](url, { ...body, ...props });
 
       if (onSuccess) {
         onSuccess(response.data);

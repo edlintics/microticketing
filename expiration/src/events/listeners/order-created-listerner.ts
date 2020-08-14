@@ -1,6 +1,6 @@
 import { Listener, OrderCreatedEvent, Subjects } from "@edticketing/common";
-import { queueGroupName } from "./queue-group-name";
 import { Message } from "node-nats-streaming";
+import { queueGroupName } from "./queue-group-name";
 import { expirationQueue } from "../../queues/expiration-queue";
 
 export class OrderCreatedListener extends Listener<OrderCreatedEvent> {
@@ -8,10 +8,18 @@ export class OrderCreatedListener extends Listener<OrderCreatedEvent> {
   queueGroupName = queueGroupName;
 
   async onMessage(data: OrderCreatedEvent["data"], msg: Message) {
-    // enque the code and send is to redis server
-    await expirationQueue.add({
-      orderId: data.id, // fetched from the object from the order created event
-    });
+    const delay = new Date(data.expiresAt).getTime() - new Date().getTime();
+    console.log("Waiting this many milliseconds to process the job:", delay);
+
+    // enqueue essage
+    await expirationQueue.add(
+      {
+        orderId: data.id,
+      },
+      {
+        delay,
+      }
+    );
 
     msg.ack();
   }

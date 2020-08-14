@@ -1,7 +1,7 @@
 import nats, { Stan } from "node-nats-streaming";
 
 class NatsWrapper {
-  private _client?: Stan; // the underscore mean that you can initialize this later than when creating instance, maybe after connectig database and other related infra
+  private _client?: Stan;
 
   get client() {
     if (!this._client) {
@@ -27,5 +27,3 @@ class NatsWrapper {
 }
 
 export const natsWrapper = new NatsWrapper();
-
-// reate a client instance taht is able to share to other files

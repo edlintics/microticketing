@@ -1,32 +1,32 @@
 import request from "supertest";
 import { app } from "../../app";
-import mongoose, { mongo } from "mongoose";
+import { Ticket } from "../../models/ticket";
+import mongoose from "mongoose";
 
-it("returns a 404 if the ticket is not found", async () => {
-  // generate a random id based on the format of mongodb
-  const id = new mongoose.Types.ObjectId().toHexString();
+it("fetches the order", async () => {
+  // Create a ticket
+  const ticket = Ticket.build({
+    id: mongoose.Types.ObjectId().toHexString(),
+    title: "concert",
+    price: 20,
+  });
+  await ticket.save();
 
-  await request(app).get(`/api/tickets/${id}`).send().expect(404);
-});
+  const user = global.signin();
 
-it("returns the ticket if the ticket is found", async () => {
-  const title = "concert";
-  const price = 20;
-
-  const response = await request(app)
-    .post("/api/tickets")
-    .set("Cookie", global.signin())
-    .send({
-      title,
-      price,
-    })
+  // make a request to build an order with this ticket
+  const { body: order } = await request(app)
+    .post("/api/orders")
+    .set("Cookie", user)
+    .send({ ticketId: ticket.id })
     .expect(201);
 
-  const ticketResponse = await request(app)
-    .get(`/api/tickets/${response.body.id}`)
+  // make request to fetch the order
+  const { body: fetchedOrder } = await request(app)
+    .get(`/api/orders/${order.id}`)
+    .set("Cookie", user)
     .send()
     .expect(200);
 
-  expect(ticketResponse.body.title).toEqual(title);
-  expect(ticketResponse.body.price).toEqual(price);
+  expect(fetchedOrder.id).toEqual(order.id);
 });

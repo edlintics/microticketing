@@ -13,7 +13,9 @@ const AppComponent = ({ Component, pageProps, currentUser }) => {
   return (
     <div>
       <Header currentUser={currentUser} />
-      <Component {...pageProps} />
+      <div className="container">
+        <Component currentUser={currentUser} {...pageProps} />
+      </div>
     </div>
   );
 };
@@ -24,16 +26,18 @@ AppComponent.getInitialProps = async (appContext) => {
 
   const { data } = await client.get("/api/users/currentuser");
 
-  /* To solve the problem of when you render the getIntialProp globally but not in the single page, we need to to mobe th child page up to
+  /* To solve the problem of when you render the getIntialProp globally but not in the single page, we need to to move the child page up to
   the global component server. the pageProps below give us access to the getIntialPageProp of what ever the child page we are rendering*/
 
   let pageProps = {};
 
   if (appContext.Component.getInitialProps) {
-    pageProps = await appContext.Component.getInitialProps(appContext.ctx);
-  }
-
-  console.log(pageProps);
+    pageProps = await appContext.Component.getInitialProps(
+      appContext.ctx,
+      client,
+      data.currentUser
+    );
+  } // pass this data down to the child pages
 
   return {
     pageProps,

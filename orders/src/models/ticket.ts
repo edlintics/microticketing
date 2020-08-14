@@ -1,22 +1,26 @@
 import mongoose from "mongoose";
-import { updateIfCurrentPlugin } from "mongoose-update-if-current"; // a module help to tracker version of document in mongodb
+import { updateIfCurrentPlugin } from "mongoose-update-if-current";
+import { Order, OrderStatus } from "./order";
 
 interface TicketAttrs {
+  id: string;
   title: string;
   price: number;
-  userId: string;
 }
 
-interface TicketDoc extends mongoose.Document {
+export interface TicketDoc extends mongoose.Document {
   title: string;
   price: number;
-  userId: string;
-  version: number; // use this instead of __v
-  orderId?: string; // optional, pacth in later if we receive any event from the order
+  version: number;
+  isReserved(): Promise<boolean>; // return method THAT return promise with a boolean
 }
 
 interface TicketModel extends mongoose.Model<TicketDoc> {
   build(attrs: TicketAttrs): TicketDoc;
+  findByEvent(event: {
+    id: string;
+    version: number;
+  }): Promise<TicketDoc | null>;
 }
 
 const ticketSchema = new mongoose.Schema(
@@ -28,13 +32,7 @@ const ticketSchema = new mongoose.Schema(
     price: {
       type: Number,
       required: true,
-    },
-    userId: {
-      type: String,
-      required: true,
-    },
-    orderId: {
-      type: String,
+      min: 0,
     },
   },
   {
@@ -46,12 +44,40 @@ const ticketSchema = new mongoose.Schema(
     },
   }
 );
-ticketSchema.set("versionKey", "version"); // the default version control is __v, we change it to field name "version"
-ticketSchema.plugin(updateIfCurrentPlugin); // use the version control in the ticket Schema
 
-ticketSchema.statics.build = (attrs: TicketAttrs) => {
-  return new Ticket(attrs);
+ticketSchema.set("versionKey", "version");
+ticketSchema.plugin(updateIfCurrentPlugin);
+
+ticketSchema.statics.findByEvent = (event: { id: string; version: number }) => {
+  return Ticket.findOne({
+    _id: event.id,
+    version: event.version - 1,
+  });
 };
+ticketSchema.statics.build = (attrs: TicketAttrs) => {
+  return new Ticket({
+    // create an objects as similar to the event fecthed, making sure a consistent id in all the database
+    _id: attrs.id,
+    title: attrs.title,
+    price: attrs.price,
+  });
+};
+ticketSchema.methods.isReserved = async function () {
+  // this === ticket document that we just called 'isReserved on
+  const existingOrder = await Order.findOne({
+    ticket: this,
+    status: {
+      $in: [
+        OrderStatus.Created,
+        OrderStatus.AwaitingPayment,
+        OrderStatus.Complete,
+      ],
+    },
+  });
+
+  return !!existingOrder;
+};
+
 const Ticket = mongoose.model<TicketDoc, TicketModel>("Ticket", ticketSchema);
 
 export { Ticket };

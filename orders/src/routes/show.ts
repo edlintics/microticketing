@@ -1,17 +1,28 @@
 import express, { Request, Response } from "express";
-import { NotFoundError } from "@edticketing/common";
-import { Ticket } from "../models/ticket";
+import {
+  requireAuth,
+  NotFoundError,
+  NotAuthorizedError,
+} from "@edticketing/common";
+import { Order } from "../models/order";
 
 const router = express.Router();
 
-router.get("/api/tickets/:id", async (req: Request, res: Response) => {
-  const ticket = await Ticket.findById(req.params.id);
+router.get(
+  "/api/orders/:orderId",
+  requireAuth,
+  async (req: Request, res: Response) => {
+    const order = await Order.findById(req.params.orderId).populate("ticket");
 
-  if (!ticket) {
-    throw new NotFoundError();
+    if (!order) {
+      throw new NotFoundError();
+    }
+    if (order.userId !== req.currentUser!.id) {
+      throw new NotAuthorizedError();
+    }
+
+    res.send(order);
   }
+);
 
-  res.send(ticket);
-});
-
-export { router as showTicketRouter };
+export { router as showOrderRouter };

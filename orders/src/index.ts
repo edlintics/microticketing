@@ -3,8 +3,12 @@
 import mongoose from "mongoose";
 import { app } from "./app";
 import { natsWrapper } from "./nats-wrapper";
-import { OrderCreatedListener } from "./events/listeners/order-created-listener";
-import { OrderCancelledListener } from "./events/listeners/order-cancelled-listener";
+
+//Import listener class to create an insatnce to listen to the nats server
+import { TicketCreatedListener } from "./events/listeners/ticket-created-listener";
+import { TicketUpdatedListener } from "./events/listeners/ticket-updated-listener";
+import { ExpirationCompleteListener } from "./events/listeners/expiration-complete-listener.";
+import { PaymentCreatedListener } from "./events/listeners/payment-created-listener";
 
 const start = async () => {
   //CHECK IF ENVIRONMENT VARIABLE IS AVAILABLE
@@ -28,8 +32,8 @@ const start = async () => {
     throw new Error("NATS_CLUSTER_ID must be defined ");
   }
 
-  // connect to mongodb
   try {
+    // connect to NATS server
     await natsWrapper.connect(
       process.env.NATS_CLUSTER_ID,
       process.env.NATS_CLIENT_ID,
@@ -43,9 +47,13 @@ const start = async () => {
     process.on("SIGINT", () => natsWrapper.client.close());
     process.on("SIGTERM", () => natsWrapper.client.close());
 
-    new OrderCreatedListener(natsWrapper.client).listen();
-    new OrderCancelledListener(natsWrapper.client).listen();
+    //Creat an instance to listen to events
+    new TicketCreatedListener(natsWrapper.client).listen();
+    new TicketUpdatedListener(natsWrapper.client).listen();
+    new ExpirationCompleteListener(natsWrapper.client).listen();
+    new PaymentCreatedListener(natsWrapper.client).listen();
 
+    // connect to mongodb
     await mongoose.connect(process.env.MONGO_URI, {
       // since we are connect to a container, we need to match the service name and the port
       useNewUrlParser: true,

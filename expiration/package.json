@@ -18,7 +18,7 @@
   "author": "",
   "license": "ISC",
   "dependencies": {
-    "@edticketing/common": "^1.0.21",
+    "@edticketing/common": "^1.0.22",
     "@types/bull": "^3.14.0",
     "bull": "^3.16.0",
     "node-nats-streaming": "^0.3.2",

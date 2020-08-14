@@ -1,102 +1,71 @@
+import mongoose from "mongoose";
 import request from "supertest";
 import { app } from "../../app";
 import { Ticket } from "../../models/ticket";
+import { Order, OrderStatus } from "../../models/order";
 import { natsWrapper } from "../../nats-wrapper";
 
-jest.mock("../../nats-wrapper");
+it("returns an error if the ticket does not exist", async () => {
+  const ticketId = mongoose.Types.ObjectId(); // generate a random ticket Id
 
-// it("has a route handler listening to /api/tickets for post requests", async () => {
-//   const response = await request(app).post("/api/tickets").send({});
-
-//   expect(response.status).not.toEqual(404);
-// });
-
-// it("can only be accessed if the user is signed in", async () => {
-//   await request(app).post("/api/tickets").send({}).expect(401);
-// });
-
-it("returns a status other than 401 if the user is signed in", async () => {
-  const response = await request(app)
-    .post("/api/tickets")
+  await request(app)
+    .post("/api/orders")
     .set("Cookie", global.signin())
-    .send({});
-
-  expect(response.status).not.toEqual(401);
+    .send({
+      ticketId,
+    })
+    .expect(404);
 });
 
-it("returns an error if an invalid title is provided", async () => {
+it("returns an error if the ticket is already reserved", async () => {
+  const ticket = Ticket.build({
+    id: mongoose.Types.ObjectId().toHexString(),
+    title: "concert",
+    price: 20,
+  });
+  await ticket.save();
+  const order = Order.build({
+    ticket,
+    userId: "laskdflkajsdf",
+    status: OrderStatus.Created,
+    expiresAt: new Date(),
+  });
+  await order.save();
+
   await request(app)
-    .post("/api/tickets")
-    .set("Cookie", global.signin()) // fake authentication, check sign in function for more detail
-    .send({
-      title: "",
-      price: 10,
-    })
-    .expect(400);
-  await request(app)
-    .post("/api/tickets")
+    .post("/api/orders")
     .set("Cookie", global.signin())
-    .send({
-      price: 10,
-    })
+    .send({ ticketId: ticket.id })
     .expect(400);
 });
 
-it("returns an error if an invalid price is provided", async () => {
+it("reserves a ticket", async () => {
+  const ticket = Ticket.build({
+    id: mongoose.Types.ObjectId().toHexString(),
+    title: "concert",
+    price: 20,
+  });
+  await ticket.save();
+
   await request(app)
-    .post("/api/tickets")
+    .post("/api/orders")
     .set("Cookie", global.signin())
-    .send({
-      title: "",
-      price: -10,
-    })
-    .expect(400);
-  await request(app)
-    .post("/api/tickets")
-    .set("Cookie", global.signin())
-    .send({
-      title: "",
-    })
-    .expect(400);
-});
-
-it("creates a ticket with valid inputs", async () => {
-  // for the confirmation case, first we get all the list of current docs, if the ticket is created, teh amount should be incremented by one
-
-  // get all the current tickets
-  let tickets = await Ticket.find({});
-  expect(tickets.length).toEqual(0);
-
-  const title = "test ticket ";
-
-  // add in a check to make sure a ticket was saved
-
-  //remember that we clear all the data befre run the test
-  await request(app)
-    .post("/api/tickets")
-    .set("Cookie", global.signin())
-    .send({
-      title,
-      price: 20,
-    })
+    .send({ ticketId: ticket.id })
     .expect(201);
-
-  tickets = await Ticket.find({});
-  expect(tickets.length).toEqual(1);
-  expect(tickets[0].price).toEqual(20);
-  expect(tickets[0].title).toEqual(title);
 });
 
-it("publishes an event", async () => {
-  const title = "test ticket ";
+it("EMITS AN ORDER CREATED EVENNT", async () => {
+  const ticket = Ticket.build({
+    id: mongoose.Types.ObjectId().toHexString(),
+    title: "concert",
+    price: 20,
+  });
+  await ticket.save();
 
   await request(app)
-    .post("/api/tickets")
+    .post("/api/orders")
     .set("Cookie", global.signin())
-    .send({
-      title,
-      price: 20,
-    })
+    .send({ ticketId: ticket.id })
     .expect(201);
 
   expect(natsWrapper.client.publish).toHaveBeenCalled();

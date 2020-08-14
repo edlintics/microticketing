@@ -1,4 +1,6 @@
 import Queue from "bull";
+import { ExpirationCompletePublisher } from '../events/publishers/expiration-complete-publisher'
+import { natsWrapper } from '../nats-wrapper'
 
 interface Payload {
   // the strcuture of job event transmit between file to redis server
@@ -14,10 +16,9 @@ const expirationQueue = new Queue<Payload>("order:expiration", {
 
 //processing the job and respond back to the server
 expirationQueue.process(async (job) => {
-  console.log(
-    "I want to publish an expiration: complete event for orderId",
-    job.data.orderId
-  );
+  new ExpirationCompletePublisher(natsWrapper.client).publish({
+    orderId: job.data.orderId
+  })
 });
 
 export { expirationQueue };
