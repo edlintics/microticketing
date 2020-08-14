@@ -4,11 +4,7 @@ on:
   pull_request:
     paths:
       - "auth/**"
-<<<<<<< HEAD
-
-=======
   
->>>>>>> a610e08b004e2b3497d00ae4f63f2cfd4c207386
 jobs:
   build:
     runs-on: ubuntu-latest
