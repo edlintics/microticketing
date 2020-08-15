@@ -15,8 +15,7 @@ export default function buildClient({ req }) {
 
       // typically we need to specify the header at here with the router
       // However, the req,header carry all the information of host and also with cookies, so we dont need to, we can console.log(req.header) to see all carried information
-      baseURL:
-        "'http://ingress-nginx-controller.ingress-nginx.svc.cluster.local",
+      baseURL: "'http://www.ticketing-dev-edlintics.xyz",
       headers: req.headers,
     });
     // Reaching out to http://SERVICENAME.NAMESPACE.svc.cluster.local/ROUTER
